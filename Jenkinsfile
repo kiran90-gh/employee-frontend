@@ -22,16 +22,16 @@ pipeline {
         }
 
         stage('Build Frontend') {
-    steps {
-        dir('frontend') {
-            echo 'Installing frontend dependencies...'
-            sh 'npm install'
+            steps {
+                dir('frontend') {
+                    echo 'Installing frontend dependencies...'
+                    sh 'npm install'
 
-            echo 'Building frontend...'
-            sh 'npm run build'
+                    echo 'Building frontend...'
+                    sh 'npm run build'
+                }
+            }
         }
-    }
-        }            
 
         stage('Build Backend') {
             steps {
@@ -42,14 +42,16 @@ pipeline {
             }
         }
 
-        stage('Frontend Tests') {
-    steps {
-        dir('frontend') {
-            echo 'Running frontend tests...'
-            sh 'npm test || true'
-        }
-    }
-}
+        stage('Test') {
+            parallel {
+                stage('Frontend Tests') {
+                    steps {
+                        dir('frontend') {
+                            echo 'Running frontend tests...'
+                            sh 'npm test || true'
+                        }
+                    }
+                }
 
                 stage('Backend Tests') {
                     steps {
