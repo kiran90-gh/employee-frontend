@@ -4,7 +4,7 @@ pipeline {
     tools {
         nodejs 'NODE-18'      // Replace with the configured NodeJS version name in Jenkins
         maven  'MAVEN-3'      // Replace with configured Maven
-        jdk    'JAVA-17'       // Replace with configured JDK
+        jdk    'JAVA-17'      // Replace with configured JDK
     }
 
     environment {
@@ -13,7 +13,6 @@ pipeline {
     }
 
     stages {
-
         stage('Clone Frontend') {
             steps {
                 dir('frontend') {
@@ -31,8 +30,8 @@ pipeline {
         }
 
         stage('Build Frontend') {
-            dir('frontend') {
-                steps {
+            steps {
+                dir('frontend') {
                     echo 'Installing frontend dependencies...'
                     sh 'npm install'
                     
@@ -43,8 +42,8 @@ pipeline {
         }
 
         stage('Build Backend') {
-            dir('backend') {
-                steps {
+            steps {
+                dir('backend') {
                     echo 'Building backend...'
                     sh 'mvn clean install -DskipTests'
                 }
@@ -54,14 +53,22 @@ pipeline {
         stage('Test') {
             parallel {
                 stage('Frontend Tests') {
-                    dir('frontend') {
-                        steps {
+                    steps {
+                        dir('frontend') {
                             echo 'Running frontend tests...'
                             sh 'npm test || true'  // Avoid pipeline failure if no tests
                         }
                     }
                 }
+                stage('Backend Tests') {
+                    steps {
+                        dir('backend') {
+                            echo 'Running backend tests...'
+                            sh 'mvn test || true'  // Avoid pipeline failure if no tests
+                        }
+                    }
+                }
             }
-        }  
+        }
     }
-}  
+}
