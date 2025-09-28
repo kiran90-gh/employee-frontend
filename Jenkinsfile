@@ -24,7 +24,7 @@ pipeline {
 
         stage('Clone Backend') {
             steps {
-                dir('backend') {
+                dir('employee-backend/employee-management') {
                     git url: "${env.BACKEND_REPO}", branch: 'main'
                 }
             }
@@ -44,7 +44,7 @@ pipeline {
 
         stage('Build Backend') {
             steps {
-                dir('backend') {
+                dir('employee-backend/employee-management') {
                     sh 'mvn clean package'
                 }
             }
@@ -63,7 +63,7 @@ pipeline {
 
                 stage('Backend Tests') {
                     steps {
-                        dir('backend') {
+                        dir('employee-backend/employee-management') {
                             echo 'Running backend tests...'
                             sh 'mvn test'
                         }
