@@ -2,20 +2,23 @@ pipeline {
     agent any
 
     tools {
-        nodejs 'NODE-18'      // Replace with your actual NodeJS installation name
+        nodejs 'NODE-18'     // Replace with your actual NodeJS installation name
         maven 'MAVEN-3'      // Replace with your actual Maven installation name
         jdk 'JAVA-17'        // Replace with your actual JDK installation name
     }
 
     environment {
+        FRONTEND_REPO = 'https://github.com/kiran90-gh/employee-frontend.git'
         BACKEND_REPO = 'https://github.com/kiran90-gh/employee-backend.git'
     }
 
     stages {
 
-        stage('Checkout Frontend') {
+        stage('Clone Frontend') {
             steps {
-                checkout scm
+                dir('frontend') {
+                    git url: "${env.FRONTEND_REPO}", branch: 'main'
+                }
             }
         }
 
@@ -42,7 +45,6 @@ pipeline {
         stage('Build Backend') {
             steps {
                 dir('backend') {
-                    echo 'Building backend with Maven...'
                     sh 'mvn clean package'
                 }
             }
@@ -54,7 +56,7 @@ pipeline {
                     steps {
                         dir('frontend') {
                             echo 'Running frontend tests...'
-                            sh 'npm test'  // Replace if you have a custom test command
+                            sh 'npm test' // Or your Angular test command
                         }
                     }
                 }
