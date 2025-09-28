@@ -2,16 +2,26 @@ pipeline {
     agent any
 
     tools {
-        nodejs 'NODE-18'
+        nodejs 'NODE-18'       // Jenkins tool name (configure in Jenkins -> Global Tool Configuration)
         maven 'MAVEN-3'
         jdk 'JAVA-17'
     }
 
     environment {
+        FRONTEND_REPO = 'https://github.com/kiran90-gh/employee-frontend.git'
         BACKEND_REPO = 'https://github.com/kiran90-gh/employee-backend.git'
     }
 
     stages {
+
+        stage('Clone Frontend') {
+            steps {
+                dir('frontend') {
+                    git branch: 'main', url: "${env.FRONTEND_REPO}"
+                }
+            }
+        }
+
         stage('Clone Backend') {
             steps {
                 dir('backend') {
@@ -47,7 +57,7 @@ pipeline {
                     steps {
                         dir('frontend') {
                             echo 'Running frontend tests...'
-                            sh 'npm test || true'
+                            sh 'npm test || true'  // Avoid failing pipeline due to test failure
                         }
                     }
                 }
