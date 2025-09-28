@@ -2,24 +2,17 @@ pipeline {
     agent any
 
     tools {
-        nodejs 'NODE-18'      // Replace with the configured NodeJS version name in Jenkins
-        maven  'MAVEN-3'      // Replace with configured Maven
-        jdk    'JAVA-17'      // Replace with configured JDK
+        nodejs 'node18'
+        maven  'maven3'
+        jdk    'jdk17'
     }
 
     environment {
-        FRONTEND_REPO = 'https://github.com/kiran90-gh/employee-frontend.git'
-        BACKEND_REPO  = 'https://github.com/kiran90-gh/employee-backend.git'
+        // Only backend repo needs to be cloned
+        BACKEND_REPO = 'https://github.com/kiran90-gh/employee-backend.git'
     }
 
     stages {
-        stage('Clone Frontend') {
-            steps {
-                dir('frontend') {
-                    git branch: 'main', url: "${env.FRONTEND_REPO}"
-                }
-            }
-        }
 
         stage('Clone Backend') {
             steps {
@@ -31,19 +24,17 @@ pipeline {
 
         stage('Build Frontend') {
             steps {
-                dir('frontend') {
-                    echo 'Installing frontend dependencies...'
-                    sh 'npm install'
-                    
-                    echo 'Building frontend...'
-                    sh 'npm run build'
-                }
+                echo 'Installing frontend dependencies...'
+                sh 'npm install'
+
+                echo 'Building frontend...'
+                sh 'npm run build'
             }
         }
 
         stage('Build Backend') {
-            steps {
-                dir('backend') {
+            dir('backend') {
+                steps {
                     echo 'Building backend...'
                     sh 'mvn clean install -DskipTests'
                 }
@@ -54,22 +45,37 @@ pipeline {
             parallel {
                 stage('Frontend Tests') {
                     steps {
-                        dir('frontend') {
-                            echo 'Running frontend tests...'
-                            sh 'npm test || true'  // Avoid pipeline failure if no tests
-                        }
+                        echo 'Running frontend tests...'
+                        sh 'npm test || true'
                     }
                 }
 
                 stage('Backend Tests') {
-                    steps {
-                        dir('backend') {
+                    dir('backend') {
+                        steps {
                             echo 'Running backend tests...'
-                            sh 'mvn test || true'  // Avoid pipeline failure if no tests
+                            sh 'mvn test'
                         }
                     }
                 }
             }
+        }
+
+        stage('Archive Artifacts') {
+            steps {
+                echo 'Archiving build artifacts...'
+                archiveArtifacts artifacts: 'backend/target/*.jar', fingerprint: true
+                archiveArtifacts artifacts: 'build/**', fingerprint: true
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed. Check logs.'
         }
     }
 }
