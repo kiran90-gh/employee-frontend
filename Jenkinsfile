@@ -2,9 +2,9 @@ pipeline {
     agent any
 
     tools {
-        nodejs 'NodeJS 18'     // Replace with your actual NodeJS installation name
-        maven 'Maven 3.8.5'    // Replace with your actual Maven installation name
-        jdk 'JDK 17'           // Replace with your actual JDK installation name
+        nodejs 'NODE-18'     // Replace with your actual NodeJS installation name
+        maven 'MAVEN-3'    // Replace with your actual Maven installation name
+        jdk 'JAVA-17'           // Replace with your actual JDK installation name
     }
 
     environment {
