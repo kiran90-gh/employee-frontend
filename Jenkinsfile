@@ -2,9 +2,9 @@ pipeline {
     agent any
 
     tools {
-        nodejs 'NODE-18'
-        maven 'MAVEN-3'
-        jdk 'JAVA-17'
+        nodejs 'NodeJS 18'     // Replace with your actual NodeJS installation name
+        maven 'Maven 3.8.5'    // Replace with your actual Maven installation name
+        jdk 'JDK 17'           // Replace with your actual JDK installation name
     }
 
     environment {
@@ -13,31 +13,34 @@ pipeline {
 
     stages {
 
+        stage('Checkout Frontend') {
+            steps {
+                checkout scm
+            }
+        }
+
         stage('Clone Backend') {
             steps {
                 dir('backend') {
-                    git branch: 'main', url: "${env.BACKEND_REPO}"
+                    git url: "${env.BACKEND_REPO}", branch: 'main'
                 }
             }
         }
 
         stage('Build Frontend') {
             steps {
-                dir('frontend') { // 👈 RUN npm commands inside the frontend directory
-                    echo 'Installing frontend dependencies...'
-                    sh 'npm install'
+                echo 'Installing frontend dependencies...'
+                sh 'npm install'
 
-                    echo 'Building frontend...'
-                    sh 'npm run build'
-                }
+                echo 'Building frontend...'
+                sh 'npm run build' // Or your custom build command
             }
         }
 
         stage('Build Backend') {
             steps {
                 dir('backend') {
-                    echo 'Building backend...'
-                    sh 'mvn clean install -DskipTests'
+                    sh 'mvn clean package'
                 }
             }
         }
@@ -46,10 +49,8 @@ pipeline {
             parallel {
                 stage('Frontend Tests') {
                     steps {
-                        dir('frontend') {
-                            echo 'Running frontend tests...'
-                            sh 'npm test || true'
-                        }
+                        echo 'Running frontend tests...'
+                        sh 'npm test' // Or your Angular test command
                     }
                 }
 
@@ -57,7 +58,7 @@ pipeline {
                     steps {
                         dir('backend') {
                             echo 'Running backend tests...'
-                            sh 'mvn test || true'
+                            sh 'mvn test'
                         }
                     }
                 }
@@ -66,22 +67,17 @@ pipeline {
 
         stage('Archive Artifacts') {
             steps {
-                echo 'Archiving build artifacts...'
-                archiveArtifacts artifacts: 'backend/target/*.jar', fingerprint: true
-                archiveArtifacts artifacts: 'frontend/build/**', fingerprint: true
+                archiveArtifacts artifacts: '**/target/*.jar', fingerprint: true
             }
         }
     }
 
     post {
-        always {
-            echo 'Pipeline execution completed'
-        }
         success {
-            echo 'Pipeline completed successfully!'
+            echo '✅ Build and tests passed.'
         }
         failure {
-            echo 'Pipeline failed. Check logs.'
+            echo '❌ Build failed. Check the logs above.'
         }
     }
 }
