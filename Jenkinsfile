@@ -13,8 +13,6 @@ pipeline {
 
     stages {
 
-        // ❌ Removed "Clone Frontend" stage
-
         stage('Clone Backend') {
             steps {
                 dir('backend') {
@@ -25,11 +23,13 @@ pipeline {
 
         stage('Build Frontend') {
             steps {
-                echo 'Installing frontend dependencies...'
-                sh 'npm install'
+                dir('frontend') { // 👈 RUN npm commands inside the frontend directory
+                    echo 'Installing frontend dependencies...'
+                    sh 'npm install'
 
-                echo 'Building frontend...'
-                sh 'npm run build'
+                    echo 'Building frontend...'
+                    sh 'npm run build'
+                }
             }
         }
 
@@ -46,8 +46,10 @@ pipeline {
             parallel {
                 stage('Frontend Tests') {
                     steps {
-                        echo 'Running frontend tests...'
-                        sh 'npm test || true'
+                        dir('frontend') {
+                            echo 'Running frontend tests...'
+                            sh 'npm test || true'
+                        }
                     }
                 }
 
@@ -66,7 +68,7 @@ pipeline {
             steps {
                 echo 'Archiving build artifacts...'
                 archiveArtifacts artifacts: 'backend/target/*.jar', fingerprint: true
-                archiveArtifacts artifacts: 'build/**', fingerprint: true
+                archiveArtifacts artifacts: 'frontend/build/**', fingerprint: true
             }
         }
     }
