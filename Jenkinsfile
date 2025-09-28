@@ -2,9 +2,9 @@ pipeline {
     agent any
 
     tools {
-        nodejs 'NODE-18'     // Replace with your actual NodeJS installation name
-        maven 'MAVEN-3'      // Replace with your actual Maven installation name
-        jdk 'JAVA-17'        // Replace with your actual JDK installation name
+        nodejs 'NODE-18'       // Your NodeJS installation name in Jenkins
+        maven 'MAVEN-3'       // Your Maven installation name in Jenkins
+        jdk 'JAVA-17'         // Your JDK installation name in Jenkins
     }
 
     environment {
@@ -32,12 +32,12 @@ pipeline {
 
         stage('Build Frontend') {
             steps {
-                dir('frontend') {
+                dir('frontend/employee-management-frontend') {
                     echo 'Installing frontend dependencies...'
                     sh 'npm install'
 
                     echo 'Building frontend...'
-                    sh 'npm run build' // Or your custom build command
+                    sh 'npm run build'  // Adjust if you use a different build command
                 }
             }
         }
@@ -54,9 +54,9 @@ pipeline {
             parallel {
                 stage('Frontend Tests') {
                     steps {
-                        dir('frontend') {
+                        dir('frontend/employee-management-frontend') {
                             echo 'Running frontend tests...'
-                            sh 'npm test' // Or your Angular test command
+                            sh 'npm test'  // Adjust if you use a different test command
                         }
                     }
                 }
