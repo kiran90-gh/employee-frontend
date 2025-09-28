@@ -8,7 +8,6 @@ pipeline {
     }
 
     environment {
-        // Only backend repo needs to be cloned
         BACKEND_REPO = 'https://github.com/kiran90-gh/employee-backend.git'
     }
 
@@ -68,7 +67,7 @@ pipeline {
             steps {
                 echo 'Archiving build artifacts...'
                 archiveArtifacts artifacts: 'backend/target/*.jar', fingerprint: true
-                archiveArtifacts artifacts: 'build/**', fingerprint: true
+                archiveArtifacts artifacts: 'frontend/build/**', fingerprint: true
             }
         }
     }
