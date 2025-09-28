@@ -2,9 +2,9 @@ pipeline {
     agent any
 
     tools {
-        nodejs 'NODE-18'     // Replace with your actual NodeJS installation name
-        maven 'MAVEN-3'    // Replace with your actual Maven installation name
-        jdk 'JAVA-17'           // Replace with your actual JDK installation name
+        nodejs 'NODE-18'      // Replace with your actual NodeJS installation name
+        maven 'MAVEN-3'      // Replace with your actual Maven installation name
+        jdk 'JAVA-17'        // Replace with your actual JDK installation name
     }
 
     environment {
@@ -29,18 +29,20 @@ pipeline {
 
         stage('Build Frontend') {
             steps {
-              dir('frontend')  
-                echo 'Installing frontend dependencies...'
-                sh 'npm install'
+                dir('frontend') {
+                    echo 'Installing frontend dependencies...'
+                    sh 'npm install'
 
-                echo 'Building frontend...'
-                sh 'npm run build' // Or your custom build command
+                    echo 'Building frontend...'
+                    sh 'npm run build' // Or your custom build command
+                }
             }
         }
 
         stage('Build Backend') {
             steps {
                 dir('backend') {
+                    echo 'Building backend with Maven...'
                     sh 'mvn clean package'
                 }
             }
@@ -50,8 +52,10 @@ pipeline {
             parallel {
                 stage('Frontend Tests') {
                     steps {
-                        echo 'Running frontend tests...'
-                        sh 'npm test' // Or your Angular test command
+                        dir('frontend') {
+                            echo 'Running frontend tests...'
+                            sh 'npm test'  // Replace if you have a custom test command
+                        }
                     }
                 }
 
