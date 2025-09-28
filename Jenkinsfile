@@ -2,25 +2,18 @@ pipeline {
     agent any
 
     tools {
-        nodejs 'NODE-18'       // Jenkins tool name (configure in Jenkins -> Global Tool Configuration)
+        nodejs 'NODE-18'
         maven 'MAVEN-3'
         jdk 'JAVA-17'
     }
 
     environment {
-        FRONTEND_REPO = 'https://github.com/kiran90-gh/employee-frontend.git'
         BACKEND_REPO = 'https://github.com/kiran90-gh/employee-backend.git'
     }
 
     stages {
 
-        stage('Clone Frontend') {
-            steps {
-                dir('frontend') {
-                    git branch: 'main', url: "${env.FRONTEND_REPO}"
-                }
-            }
-        }
+        // ❌ Removed "Clone Frontend" stage
 
         stage('Clone Backend') {
             steps {
@@ -32,13 +25,11 @@ pipeline {
 
         stage('Build Frontend') {
             steps {
-                dir('frontend') {
-                    echo 'Installing frontend dependencies...'
-                    sh 'npm install'
+                echo 'Installing frontend dependencies...'
+                sh 'npm install'
 
-                    echo 'Building frontend...'
-                    sh 'npm run build'
-                }
+                echo 'Building frontend...'
+                sh 'npm run build'
             }
         }
 
@@ -55,10 +46,8 @@ pipeline {
             parallel {
                 stage('Frontend Tests') {
                     steps {
-                        dir('frontend') {
-                            echo 'Running frontend tests...'
-                            sh 'npm test || true'  // Avoid failing pipeline due to test failure
-                        }
+                        echo 'Running frontend tests...'
+                        sh 'npm test || true'
                     }
                 }
 
@@ -77,7 +66,7 @@ pipeline {
             steps {
                 echo 'Archiving build artifacts...'
                 archiveArtifacts artifacts: 'backend/target/*.jar', fingerprint: true
-                archiveArtifacts artifacts: 'frontend/build/**', fingerprint: true
+                archiveArtifacts artifacts: 'build/**', fingerprint: true
             }
         }
     }
