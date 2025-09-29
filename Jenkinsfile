@@ -14,8 +14,8 @@ pipeline {
         RDS_ENDPOINT  = 'database-1.cpugiccsyl82.ap-south-1.rds.amazonaws.com'
         DB_NAME       = 'employee_db'
         // Sonar Related environment (if needed)
-        // SONAR_PROJECT_KEY = 'my-projects'
-        // SONAR_HOST = 'http://52.66.221.120/:9000'
+        SONAR_PROJECT_KEY = 'my-projects'
+        SONAR_HOST = 'http://52.66.221.120/:9000'
     }
 
     stages {
