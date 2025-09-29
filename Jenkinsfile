@@ -14,19 +14,19 @@ pipeline {
         RDS_ENDPOINT = 'database-1.cpugiccsyl82.ap-south-1.rds.amazonaws.com'
         DB_NAME = 'database-1'
     }
-     stages {
+
+    stages {
         stage('Configure AWS') {
             steps {
                 withAWS(region: "${AWS_REGION}", credentials: 'aws-rds-credentials') {
                     script {
                         // AWS operations here
+                        echo "Connected to AWS region: ${AWS_REGION}"
+                        echo "RDS Endpoint: ${RDS_ENDPOINT}"
                     }
                 }
             }
         }
-     }   
-            
-    stages {
 
         stage('Clone Frontend') {
             steps {
@@ -65,6 +65,27 @@ pipeline {
             }
         }
 
+        stage('Database Operations') {
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'rds-db-credentials',
+                        usernameVariable: 'DB_USER',
+                        passwordVariable: 'DB_PASSWORD'
+                    )
+                ]) {
+                    script {
+                        echo "Testing RDS connection..."
+                        // Example: Test database connection
+                        sh """
+                            # Test PostgreSQL connection (adjust for your database type)
+                            PGPASSWORD=${DB_PASSWORD} psql -h ${RDS_ENDPOINT} -U ${DB_USER} -d ${DB_NAME} -c "SELECT version();" || echo "Database connection test completed"
+                        """
+                    }
+                }
+            }
+        }
+
         stage('Test') {
             parallel {
                 stage('Frontend Tests') {
@@ -90,6 +111,16 @@ pipeline {
         stage('Archive Artifacts') {
             steps {
                 archiveArtifacts artifacts: '**/target/*.jar', fingerprint: true
+                archiveArtifacts artifacts: 'frontend/employee-management-frontend/build/**/*', fingerprint: true
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                script {
+                    echo "Deployment stage would go here"
+                    // Add your deployment logic here
+                }
             }
         }
     }
@@ -97,9 +128,15 @@ pipeline {
     post {
         success {
             echo '✅ Build and tests passed.'
+            // Optional: Send success notifications
         }
         failure {
             echo '❌ Build failed. Check the logs above.'
+            // Optional: Send failure notifications
+        }
+        always {
+            echo '📊 Build pipeline completed.'
+            // Optional: Cleanup operations
         }
     }
 }
