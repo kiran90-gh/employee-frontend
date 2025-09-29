@@ -105,37 +105,37 @@ pipeline {
         }
 
         stage('SonarQube Analysis') {
-            steps {
-                // Use the SonarQube Jenkins plugin
-                withSonarQubeEnv('MySonarQubeServer') { 
-                    script {
-                        // If you want to scan both frontend & backend in one sonar analysis
-                        sh """
-                            # For backend (Java), using Maven
-                            cd backend/employee-management
-                            mvn sonar:sonar \
-                              -Dsonar.projectKey=employee-backend \
-                              -Dsonar.sources=src/main/java \
-                              -Dsonar.tests=src/test/java \
-                              -Dsonar.host.url=$SONAR_HOST_URL \
-                              -Dsonar.login=$SONAR_AUTH_TOKEN
-                        """
-                        sh """
-                            # For frontend (NodeJS)
-                            cd ../../frontend/employee-management-frontend
-                            # If using sonar-scanner CLI
-                            sonar-scanner \
-                              -Dsonar.projectKey=employee-frontend \
-                              -Dsonar.sources=src \
-                              -Dsonar.tests=src \
-                              -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
-                              -Dsonar.host.url=$SONAR_HOST_URL \
-                              -Dsonar.login=$SONAR_AUTH_TOKEN
-                        """
-                    }
+           steps {
+             withSonarQubeEnv('MySonarQubeServer') {
+             script {
+                // Backend Java analysis
+                dir('backend/employee-management') {
+                    sh """
+                      mvn sonar:sonar \
+                        -Dsonar.projectKey=employee-backend \
+                        -Dsonar.sources=src/main/java \
+                        -Dsonar.tests=src/test/java \
+                        -Dsonar.host.url=$SONAR_HOST_URL \
+                        -Dsonar.token=$SONAR_AUTH_TOKEN
+                    """
+                }
+                
+                // Frontend JS/TS analysis
+                dir('frontend/employee-management-frontend') {
+                    sh """
+                      sonar-scanner \
+                        -Dsonar.projectKey=employee-frontend \
+                        -Dsonar.sources=src \
+                        -Dsonar.tests=src \
+                        -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
+                        -Dsonar.host.url=$SONAR_HOST_URL \
+                        -Dsonar.token=$SONAR_AUTH_TOKEN
+                    """
                 }
             }
         }
+    }
+}
 
         stage('Quality Gate') {
             steps {
