@@ -8,15 +8,13 @@ pipeline {
     }
 
     environment {
-        FRONTEND_REPO = 'https://github.com/kiran90-gh/employee-frontend.git'
-        BACKEND_REPO  = 'https://github.com/kiran90-gh/employee-backend.git'
-        AWS_REGION    = 'ap-south-1'
-        RDS_ENDPOINT  = 'database-1.cpugiccsyl82.ap-south-1.rds.amazonaws.com'
-        DB_NAME       = 'employee_db'
-
-        // Sonar
-        SONAR_AUTH_TOKEN = 'squ_a3456e28ff7723fb19bdb4370d15bfb641901189'
-        SONAR_HOST_URL   = 'http://52.66.221.120:9000'
+        FRONTEND_REPO     = 'https://github.com/kiran90-gh/employee-frontend.git'
+        BACKEND_REPO      = 'https://github.com/kiran90-gh/employee-backend.git'
+        AWS_REGION        = 'ap-south-1'
+        RDS_ENDPOINT      = 'database-1.cpugiccsyl82.ap-south-1.rds.amazonaws.com'
+        DB_NAME           = 'employee_db'
+        SONAR_AUTH_TOKEN  = 'squ_a3456e28ff7723fb19bdb4370d15bfb641901189'
+        SONAR_HOST_URL    = 'http://52.66.221.120:9000'
     }
 
     stages {
@@ -69,6 +67,7 @@ pipeline {
                 stage('Frontend Tests') {
                     steps {
                         dir('frontend/employee-management-frontend') {
+                            // generate coverage if possible
                             sh 'npm test -- --coverage'
                         }
                     }
@@ -88,13 +87,13 @@ pipeline {
                                 ]) {
                                     sh '''
                                         mvn test \
-                                            -Dspring.datasource.url=jdbc:mysql://${RDS_ENDPOINT}:3306/${DB_NAME} \
-                                            -Dspring.datasource.username=${DB_USER} \
-                                            -Dspring.datasource.password=${DB_PASSWORD} \
-                                            -Dspring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver \
-                                            -Dspring.jpa.hibernate.ddl-auto=update \
-                                            -Dspring.jpa.show-sql=true \
-                                            -Dspring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
+                                          -Dspring.datasource.url=jdbc:mysql://${RDS_ENDPOINT}:3306/${DB_NAME} \
+                                          -Dspring.datasource.username=${DB_USER} \
+                                          -Dspring.datasource.password=${DB_PASSWORD} \
+                                          -Dspring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver \
+                                          -Dspring.jpa.hibernate.ddl-auto=update \
+                                          -Dspring.jpa.show-sql=true \
+                                          -Dspring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
                                     '''
                                 }
                             }
@@ -110,28 +109,29 @@ pipeline {
                     script {
                         def scannerHome = tool 'SonarScanner'
 
-                        // Backend analysis
+                        // Backend (Java) analysis
                         dir('backend/employee-management') {
                             sh """
-                                mvn sonar:sonar \
-                                  -Dsonar.projectKey=employee-backend \
-                                  -Dsonar.sources=src/main/java \
-                                  -Dsonar.tests=src/test/java \
-                                  -Dsonar.host.url=${SONAR_HOST_URL} \
-                                  -Dsonar.token=${SONAR_AUTH_TOKEN}
+                              mvn sonar:sonar \
+                                -Dsonar.projectKey=employee-backend \
+                                -Dsonar.sources=src/main/java \
+                                -Dsonar.tests=src/test/java \
+                                -Dsonar.host.url=${SONAR_HOST_URL} \
+                                -Dsonar.token=${SONAR_AUTH_TOKEN}
                             """
                         }
 
-                        // Frontend analysis
+                        // Frontend (JS/TS) analysis
                         dir('frontend/employee-management-frontend') {
                             sh """
-                                ${scannerHome}/bin/sonar-scanner \
-                                  -Dsonar.projectKey=employee-frontend \
-                                  -Dsonar.sources=src \
-                                  -Dsonar.tests=src \
-                                  -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
-                                  -Dsonar.host.url=${SONAR_HOST_URL} \
-                                  -Dsonar.token=${SONAR_AUTH_TOKEN}
+                              ${scannerHome}/bin/sonar-scanner \
+                                -Dsonar.projectKey=employee-frontend \
+                                -Dsonar.sources=src \
+                                -Dsonar.tests=src/tests \
+                                -Dsonar.exclusions=**/build/**,**/dist/**,**/*.spec.js,**/*.test.js \
+                                -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
+                                -Dsonar.host.url=${SONAR_HOST_URL} \
+                                -Dsonar.token=${SONAR_AUTH_TOKEN}
                             """
                         }
                     }
@@ -159,23 +159,20 @@ pipeline {
                 expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
             }
             steps {
-                script {
-                    echo "🚀 Deployment stage would go here"
-                    // Add deployment logic here
-                }
+                echo "🚀 Deployment logic goes here"
             }
         }
     }
 
     post {
         success {
-            echo '✅ Build, tests, Sonar analysis, and quality gate passed.'
+            echo '✅ Pipeline succeeded: build, tests, and quality gate passed.'
         }
         failure {
-            echo '❌ One of the stages failed. Check logs for sonar quality gate or other errors.'
+            echo '❌ Pipeline failed — check logs for errors or quality gate failures.'
         }
         always {
-            echo '📊 Pipeline completed.'
+            echo '📊 Pipeline finished (success or failure).'
         }
     }
 }
