@@ -5,7 +5,6 @@ pipeline {
         nodejs 'NODE-18'
         maven 'MAVEN-3'
         jdk 'JAVA-17'
-        sonar
     }
 
     environment {
@@ -14,9 +13,10 @@ pipeline {
         AWS_REGION    = 'ap-south-1'
         RDS_ENDPOINT  = 'database-1.cpugiccsyl82.ap-south-1.rds.amazonaws.com'
         DB_NAME       = 'employee_db'
-        // Sonar Related environment (if needed)
-        SONAR_AUTH_TOKEN= 'squ_a3456e28ff7723fb19bdb4370d15bfb641901189'
-        SONAR_HOST_URL= 'http://52.66.221.120/:9000'
+
+        // Sonar
+        SONAR_AUTH_TOKEN = 'squ_a3456e28ff7723fb19bdb4370d15bfb641901189'
+        SONAR_HOST_URL   = 'http://52.66.221.120:9000'
     }
 
     stages {
@@ -69,7 +69,6 @@ pipeline {
                 stage('Frontend Tests') {
                     steps {
                         dir('frontend/employee-management-frontend') {
-                            // optionally generate coverage report here
                             sh 'npm test -- --coverage'
                         }
                     }
@@ -106,37 +105,39 @@ pipeline {
         }
 
         stage('SonarQube Analysis') {
-           steps {
-             withSonarQubeEnv('MySonarQubeServer') {
-             script {
-                // Backend Java analysis
-                dir('backend/employee-management') {
-                    sh """
-                      mvn sonar:sonar \
-                        -Dsonar.projectKey=employee-backend \
-                        -Dsonar.sources=src/main/java \
-                        -Dsonar.tests=src/test/java \
-                        -Dsonar.host.url=$SONAR_HOST_URL \
-                        -Dsonar.token=$SONAR_AUTH_TOKEN
-                    """
-                }
-                
-                // Frontend JS/TS analysis
-                dir('frontend/employee-management-frontend') {
-                    sh """
-                      sonar \
-                        -Dsonar.projectKey=employee-frontend \
-                        -Dsonar.sources=src \
-                        -Dsonar.tests=src \
-                        -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
-                        -Dsonar.host.url=$SONAR_HOST_URL \
-                        -Dsonar.token=$SONAR_AUTH_TOKEN
-                    """
+            steps {
+                withSonarQubeEnv('MySonarQubeServer') {
+                    script {
+                        def scannerHome = tool 'SonarScanner'
+
+                        // Backend analysis
+                        dir('backend/employee-management') {
+                            sh """
+                                mvn sonar:sonar \
+                                  -Dsonar.projectKey=employee-backend \
+                                  -Dsonar.sources=src/main/java \
+                                  -Dsonar.tests=src/test/java \
+                                  -Dsonar.host.url=${SONAR_HOST_URL} \
+                                  -Dsonar.token=${SONAR_AUTH_TOKEN}
+                            """
+                        }
+
+                        // Frontend analysis
+                        dir('frontend/employee-management-frontend') {
+                            sh """
+                                ${scannerHome}/bin/sonar-scanner \
+                                  -Dsonar.projectKey=employee-frontend \
+                                  -Dsonar.sources=src \
+                                  -Dsonar.tests=src \
+                                  -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
+                                  -Dsonar.host.url=${SONAR_HOST_URL} \
+                                  -Dsonar.token=${SONAR_AUTH_TOKEN}
+                            """
+                        }
+                    }
                 }
             }
         }
-    }
-}
 
         stage('Quality Gate') {
             steps {
@@ -160,7 +161,7 @@ pipeline {
             steps {
                 script {
                     echo "🚀 Deployment stage would go here"
-                    // your deploy steps
+                    // Add deployment logic here
                 }
             }
         }
