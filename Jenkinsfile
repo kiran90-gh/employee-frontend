@@ -61,28 +61,19 @@ pipeline {
             }
         }
 
-        stage('Database Operations') {
-            steps {
-                withCredentials([
-                    usernamePassword(
-                        credentialsId: 'rds-db-credentials',
-                        usernameVariable: 'DB_USER',
-                        passwordVariable: 'DB_PASSWORD'
-                    )
-                ]) {
-                    script {
-                      echo 'Testing RDS MySQL connection...'
-                      sh '''
-                      mvn test \
-                       -Dspring.datasource.url=jdbc:mysql://database-1.cpugiccsyl82.ap-south-1.rds.amazonaws.com:3306/employee_db \
-                       -Dspring.datasource.username=admin \
-                       -Dspring.datasource.password=$DB_PASSWORD
-                   '''
-                    }
-
+       stage('Database Operations') {
+          steps {
+              // Change to the directory containing the backend pom.xml
+              dir('employee-backend/employee-management') {
+              withCredentials([string(credentialsId: 'DB_PASSWORD', variable: 'DB_PASSWORD')]) {
+                script {
+                    echo 'Testing RDS MySQL connection...'
+                    sh "mvn test -Dspring.datasource.url=jdbc:mysql://${DB_ENDPOINT}:3306/employee_db -Dspring.datasource.username=${DB_USER} -Dspring.datasource.password=${DB_PASSWORD}"
                 }
             }
         }
+    }
+}
 
         stage('Test') {
             parallel {
