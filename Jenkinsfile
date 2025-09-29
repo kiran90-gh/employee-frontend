@@ -123,16 +123,16 @@ pipeline {
 
                         // Frontend (JS/TS) analysis
                         dir('frontend/employee-management-frontend') {
-                            sh """
-                              ${scannerHome}/bin/sonar-scanner \
-                                -Dsonar.projectKey=employee-frontend \
-                                -Dsonar.sources=src \
-                                -Dsonar.tests=src/tests \
-                                -Dsonar.exclusions=**/build/**,**/dist/**,**/*.spec.js,**/*.test.js \
-                                -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
-                                -Dsonar.host.url=${SONAR_HOST_URL} \
-                                -Dsonar.token=${SONAR_AUTH_TOKEN}
-                            """
+                          sh """
+                          ${scannerHome}/bin/sonar-scanner \
+                          -Dsonar.projectKey=employee-frontend \
+                          -Dsonar.sources=src \
+                          -Dsonar.tests=  \
+                          -Dsonar.exclusions=**/build/**,**/dist/**,**/*.spec.js,**/*.test.js \
+                          -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
+                          -Dsonar.host.url=${SONAR_HOST_URL} \
+                          -Dsonar.token=${SONAR_AUTH_TOKEN}
+                           """
                         }
                     }
                 }
