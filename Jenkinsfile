@@ -5,6 +5,7 @@ pipeline {
         nodejs 'NODE-18'
         maven 'MAVEN-3'
         jdk 'JAVA-17'
+        git 'Default' // or the name you configured
     }
 
     environment {
