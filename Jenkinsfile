@@ -72,7 +72,10 @@ pipeline {
                     script {
                         echo "Testing RDS MySQL connection..."
                         sh """
-                            echo 'SHOW DATABASES;' | mysql -h ${RDS_ENDPOINT} -u ${DB_USER} -p${DB_PASSWORD} || echo "MySQL connection test completed"
+                           ./mvnw test \
+                             -Dspring.datasource.url=jdbc:mysql://${RDS_ENDPOINT}:3306/${DB_NAME} \
+                             -Dspring.datasource.username=${DB_USER} \
+                             -Dspring.datasource.password=${DB_PASSWORD}
                         """
                     }
                 }
