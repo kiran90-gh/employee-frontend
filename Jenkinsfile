@@ -5,15 +5,15 @@ pipeline {
         nodejs 'NODE-18'
         maven 'MAVEN-3'
         jdk 'JAVA-17'
-        git 'Default' // or the name you configured
+        // removed git, not valid here
     }
 
     environment {
         FRONTEND_REPO = 'https://github.com/kiran90-gh/employee-frontend.git'
         BACKEND_REPO = 'https://github.com/kiran90-gh/employee-backend.git'
-        AWS_REGION = 'ap-south-1'
+        AWS_REGION   = 'ap-south-1'
         RDS_ENDPOINT = 'database-1.cpugiccsyl82.ap-south-1.rds.amazonaws.com'
-        DB_NAME = 'employee_db'
+        DB_NAME      = 'employee_db'
     }
 
     stages {
@@ -61,19 +61,22 @@ pipeline {
             }
         }
 
-       stage('Database Operations') {
-          steps {
-              // Change to the directory containing the backend pom.xml
-              dir('employee-backend/employee-management') {
-              withCredentials([string(credentialsId: 'DB_PASSWORD', variable: 'DB_PASSWORD')]) {
-                script {
-                    echo 'Testing RDS MySQL connection...'
-                    sh "mvn test -Dspring.datasource.url=jdbc:mysql://${DB_ENDPOINT}:3306/employee_db -Dspring.datasource.username=${DB_USER} -Dspring.datasource.password=${DB_PASSWORD}"
+        stage('Database Operations') {
+            steps {
+                withCredentials([usernamePassword(
+                                    credentialsId: 'rds-db-credentials',
+                                    usernameVariable: 'DB_USER',
+                                    passwordVariable: 'DB_PASSWORD'
+                                )]) {
+                    script {
+                        echo '🔎 Testing RDS MySQL connection...'
+                        sh '''
+                            mysql -h ${RDS_ENDPOINT} -u ${DB_USER} -p${DB_PASSWORD} -e "SHOW DATABASES;"
+                        '''
+                    }
                 }
             }
         }
-    }
-}
 
         stage('Test') {
             parallel {
@@ -99,15 +102,15 @@ pipeline {
                                     "RDS_ENDPOINT=${env.RDS_ENDPOINT}",
                                     "DB_NAME=${env.DB_NAME}"
                                 ]) {
-                                    // Spring Boot will use application-test.properties
                                     sh '''
-                                        mvn test -Dspring.datasource.url=jdbc:mysql://${RDS_ENDPOINT}:3306/${DB_NAME} \
-                                                 -Dspring.datasource.username=${DB_USER} \
-                                                 -Dspring.datasource.password=${DB_PASSWORD} \
-                                                 -Dspring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver \
-                                                 -Dspring.jpa.hibernate.ddl-auto=update \
-                                                 -Dspring.jpa.show-sql=true \
-                                                 -Dspring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL8Dialect
+                                        mvn test \
+                                            -Dspring.datasource.url=jdbc:mysql://${RDS_ENDPOINT}:3306/${DB_NAME} \
+                                            -Dspring.datasource.username=${DB_USER} \
+                                            -Dspring.datasource.password=${DB_PASSWORD} \
+                                            -Dspring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver \
+                                            -Dspring.jpa.hibernate.ddl-auto=update \
+                                            -Dspring.jpa.show-sql=true \
+                                            -Dspring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQLDialect
                                     '''
                                 }
                             }
@@ -127,7 +130,7 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                    echo "Deployment stage would go here"
+                    echo "🚀 Deployment stage would go here"
                 }
             }
         }
