@@ -12,7 +12,7 @@ pipeline {
         BACKEND_REPO = 'https://github.com/kiran90-gh/employee-backend.git'
         AWS_REGION = 'ap-south-1'
         RDS_ENDPOINT = 'database-1.cpugiccsyl82.ap-south-1.rds.amazonaws.com'
-        DB_NAME = 'database-1'
+        DB_NAME = 'employee_db'
     }
 
     stages {
