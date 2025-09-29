@@ -5,6 +5,7 @@ pipeline {
         nodejs 'NODE-18'
         maven 'MAVEN-3'
         jdk 'JAVA-17'
+        sonar
     }
 
     environment {
@@ -123,7 +124,7 @@ pipeline {
                 // Frontend JS/TS analysis
                 dir('frontend/employee-management-frontend') {
                     sh """
-                      sonar-scanner \
+                      sonar \
                         -Dsonar.projectKey=employee-frontend \
                         -Dsonar.sources=src \
                         -Dsonar.tests=src \
