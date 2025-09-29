@@ -2,9 +2,9 @@ pipeline {
     agent any
 
     tools {
-        nodejs 'NODE-18'       // Your NodeJS installation name in Jenkins
-        maven 'MAVEN-3'       // Your Maven installation name in Jenkins
-        jdk 'JAVA-17'         // Your JDK installation name in Jenkins
+        nodejs 'NODE-18'
+        maven 'MAVEN-3'
+        jdk 'JAVA-17'
     }
 
     environment {
@@ -20,7 +20,6 @@ pipeline {
             steps {
                 withAWS(region: "${AWS_REGION}", credentials: 'aws-rds-credentials') {
                     script {
-                        // AWS operations here
                         echo "Connected to AWS region: ${AWS_REGION}"
                         echo "RDS Endpoint: ${RDS_ENDPOINT}"
                     }
@@ -47,11 +46,8 @@ pipeline {
         stage('Build Frontend') {
             steps {
                 dir('frontend/employee-management-frontend') {
-                    echo 'Installing frontend dependencies...'
                     sh 'npm install'
-
-                    echo 'Building frontend...'
-                    sh 'npm run build'  // Adjust if you use a different build command
+                    sh 'npm run build'
                 }
             }
         }
@@ -59,7 +55,6 @@ pipeline {
         stage('Build Backend') {
             steps {
                 dir('employee-backend/employee-management') {
-                    echo 'Building backend with Maven...'
                     sh 'mvn clean package'
                 }
             }
@@ -75,11 +70,9 @@ pipeline {
                     )
                 ]) {
                     script {
-                        echo "Testing RDS connection..."
-                        // Example: Test database connection
+                        echo "Testing RDS MySQL connection..."
                         sh """
-                            # Test PostgreSQL connection (adjust for your database type)
-                            PGPASSWORD=${DB_PASSWORD} psql -h ${RDS_ENDPOINT} -U ${DB_USER} -d ${DB_NAME} -c "SELECT version();" || echo "Database connection test completed"
+                            echo 'SHOW DATABASES;' | mysql -h ${RDS_ENDPOINT} -u ${DB_USER} -p${DB_PASSWORD} || echo "MySQL connection test completed"
                         """
                     }
                 }
@@ -91,8 +84,7 @@ pipeline {
                 stage('Frontend Tests') {
                     steps {
                         dir('frontend/employee-management-frontend') {
-                            echo 'Running frontend tests...'
-                            sh 'npm test'  // Adjust if you use a different test command
+                            sh 'npm test'
                         }
                     }
                 }
@@ -100,8 +92,29 @@ pipeline {
                 stage('Backend Tests') {
                     steps {
                         dir('employee-backend/employee-management') {
-                            echo 'Running backend tests...'
-                            sh 'mvn test'
+                            withCredentials([
+                                usernamePassword(
+                                    credentialsId: 'rds-db-credentials',
+                                    usernameVariable: 'DB_USER',
+                                    passwordVariable: 'DB_PASSWORD'
+                                )
+                            ]) {
+                                withEnv([
+                                    "RDS_ENDPOINT=${env.RDS_ENDPOINT}",
+                                    "DB_NAME=${env.DB_NAME}"
+                                ]) {
+                                    // Spring Boot will use application-test.properties
+                                    sh '''
+                                        mvn test -Dspring.datasource.url=jdbc:mysql://${RDS_ENDPOINT}:3306/${DB_NAME} \
+                                                 -Dspring.datasource.username=${DB_USER} \
+                                                 -Dspring.datasource.password=${DB_PASSWORD} \
+                                                 -Dspring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver \
+                                                 -Dspring.jpa.hibernate.ddl-auto=update \
+                                                 -Dspring.jpa.show-sql=true \
+                                                 -Dspring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL8Dialect
+                                    '''
+                                }
+                            }
                         }
                     }
                 }
@@ -119,7 +132,6 @@ pipeline {
             steps {
                 script {
                     echo "Deployment stage would go here"
-                    // Add your deployment logic here
                 }
             }
         }
@@ -128,15 +140,12 @@ pipeline {
     post {
         success {
             echo '✅ Build and tests passed.'
-            // Optional: Send success notifications
         }
         failure {
             echo '❌ Build failed. Check the logs above.'
-            // Optional: Send failure notifications
         }
         always {
             echo '📊 Build pipeline completed.'
-            // Optional: Cleanup operations
         }
     }
 }
