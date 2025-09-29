@@ -71,14 +71,15 @@ pipeline {
                     )
                 ]) {
                     script {
-                        echo "Testing RDS MySQL connection..."
-                        sh """
-                           ./mvn test \
-                             -Dspring.datasource.url=jdbc:mysql://${RDS_ENDPOINT}:3306/${DB_NAME} \
-                             -Dspring.datasource.username=${DB_USER} \
-                             -Dspring.datasource.password=${DB_PASSWORD}
-                        """
+                      echo 'Testing RDS MySQL connection...'
+                      sh '''
+                      mvn test \
+                       -Dspring.datasource.url=jdbc:mysql://database-1.cpugiccsyl82.ap-south-1.rds.amazonaws.com:3306/employee_db \
+                       -Dspring.datasource.username=admin \
+                       -Dspring.datasource.password=$DB_PASSWORD
+                   '''
                     }
+
                 }
             }
         }
